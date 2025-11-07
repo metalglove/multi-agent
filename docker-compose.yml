@@ -1,30 +1,54 @@
 version: '3.8'
 
 services:
-  backend:
+  redis:
+    image: redis:7-alpine
+    container_name: crewai-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - crewai-network
+    command: redis-server --appendonly yes
+
+  bridge:
     build:
       context: .
-      dockerfile: Dockerfile.backend
+      dockerfile: Dockerfile.bridge
+    container_name: crewai-bridge
     ports:
       - "8000:8000"
     environment:
-      - BACKEND_PORT=8000
-      - OPENAI_API_BASE=http://host.docker.internal:1234/v1
+      - REDIS_URL=redis://redis:6379/0
+      - REDIS_CHANNEL=crewai:events
+      - BRIDGE_PORT=8000
       - WS_URL=ws://localhost:8000/ws/events
-    volumes:
-      - ./outputs:/app/outputs
-      - ./src/core:/app/src/core
     depends_on:
-      - frontend
+      redis:
+        condition: service_healthy
     networks:
       - crewai-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   frontend:
     build:
       context: ./src/frontend
       dockerfile: Dockerfile
+    container_name: crewai-frontend
     ports:
       - "5173:80"
+    environment:
+      - VITE_WS_URL=ws://localhost:8000/ws/events
+    depends_on:
+      - bridge
     networks:
       - crewai-network
 

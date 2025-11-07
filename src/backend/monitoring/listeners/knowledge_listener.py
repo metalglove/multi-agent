@@ -1,6 +1,6 @@
-from typing import Any
 import asyncio
 
+from crewai import Agent
 from crewai.knowledge.knowledge import Knowledge
 from crewai.events.types.knowledge_events import (
     KnowledgeSearchQueryFailedEvent,
@@ -32,7 +32,7 @@ class KnowledgeListener(ForwardingListener):
             self._push(payload)
 
         @crewai_event_bus.on(KnowledgeQueryCompletedEvent)
-        def on_knowledge_query_completed(source: Knowledge, event: KnowledgeQueryCompletedEvent):
+        def on_knowledge_query_completed(source: Agent, event: KnowledgeQueryCompletedEvent):
             payload = {
                 "type": event.type,
                 "timestamp": event.timestamp,
@@ -43,7 +43,7 @@ class KnowledgeListener(ForwardingListener):
             self._push(payload)
 
         @crewai_event_bus.on(KnowledgeQueryFailedEvent)
-        def on_knowledge_query_failed(source: Knowledge, event: KnowledgeQueryFailedEvent):
+        def on_knowledge_query_failed(source: Agent, event: KnowledgeQueryFailedEvent):
             payload = {
                 "type": event.type,
                 "timestamp": getattr(event, "timestamp", None),
@@ -54,7 +54,7 @@ class KnowledgeListener(ForwardingListener):
             self._push(payload)
 
         @crewai_event_bus.on(KnowledgeRetrievalStartedEvent)
-        def on_knowledge_retrieval_started(source: Knowledge, event: KnowledgeRetrievalStartedEvent):
+        def on_knowledge_retrieval_started(source: Agent, event: KnowledgeRetrievalStartedEvent):
             payload = {
                 "type": event.type,
                 "timestamp": getattr(event, "timestamp", None),
@@ -65,7 +65,7 @@ class KnowledgeListener(ForwardingListener):
             self._push(payload)
 
         @crewai_event_bus.on(KnowledgeRetrievalCompletedEvent)
-        def on_knowledge_retrieval_completed(source: Knowledge, event: KnowledgeRetrievalCompletedEvent):
+        def on_knowledge_retrieval_completed(source: Agent, event: KnowledgeRetrievalCompletedEvent):
             payload = {
                 "type": event.type,
                 "timestamp": getattr(event, "timestamp", None),
@@ -77,7 +77,7 @@ class KnowledgeListener(ForwardingListener):
             self._push(payload)
 
         @crewai_event_bus.on(KnowledgeSearchQueryFailedEvent)
-        def on_knowledge_search_query_failed(source: Knowledge, event: KnowledgeSearchQueryFailedEvent):
+        def on_knowledge_search_query_failed(source: Agent, event: KnowledgeSearchQueryFailedEvent):
             payload = {
                 "type": event.type,
                 "timestamp": getattr(event, "timestamp", None),

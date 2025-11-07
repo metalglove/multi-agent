@@ -1,4 +1,3 @@
-from typing import Any
 import asyncio
 
 from crewai.mcp.client import MCPClient

@@ -1,6 +1,7 @@
-from typing import Any
 import asyncio
 
+from crewai import LLM
+from crewai import LLM
 from crewai.llms.base_llm import BaseLLM
 from crewai.events.types.llm_events import (
     LLMCallStartedEvent,
@@ -18,7 +19,7 @@ class LLMListener(ForwardingListener):
 
     def setup_listeners(self, crewai_event_bus: CrewAIEventsBus) -> None:
         @crewai_event_bus.on(LLMCallStartedEvent)
-        def on_llm_call_started(source: BaseLLM, event: LLMCallStartedEvent):
+        def on_llm_call_started(source: BaseLLM | LLM, event: LLMCallStartedEvent):
             payload = {
                 "type": event.type,
                 "timestamp": event.timestamp,
@@ -32,7 +33,7 @@ class LLMListener(ForwardingListener):
             self._push(payload)
 
         @crewai_event_bus.on(LLMCallCompletedEvent)
-        def on_llm_call_completed(source: BaseLLM, event: LLMCallCompletedEvent):
+        def on_llm_call_completed(source: BaseLLM | LLM, event: LLMCallCompletedEvent):
             payload = {
                 "type": event.type,
                 "call_type": getattr(event, "call_type", None).value if getattr(event, "call_type", None) else None,
@@ -47,7 +48,7 @@ class LLMListener(ForwardingListener):
             self._push(payload)
 
         @crewai_event_bus.on(LLMCallFailedEvent)
-        def on_llm_call_failed(source: BaseLLM, event: LLMCallFailedEvent):
+        def on_llm_call_failed(source: BaseLLM | LLM, event: LLMCallFailedEvent):
             payload = {
                 "type": event.type,
                 "timestamp": event.timestamp,
@@ -59,7 +60,7 @@ class LLMListener(ForwardingListener):
             self._push(payload)
 
         @crewai_event_bus.on(LLMStreamChunkEvent)
-        def on_llm_stream_chunk(source: BaseLLM, event: LLMStreamChunkEvent):
+        def on_llm_stream_chunk(source: BaseLLM | LLM, event: LLMStreamChunkEvent):
             payload = {
                 "type": event.type,
                 "timestamp": event.timestamp,

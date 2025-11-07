@@ -1,6 +1,6 @@
-from typing import Any
 import asyncio
 
+from crewai import Agent
 from crewai.events.types.logging_events import (
     AgentLogsStartedEvent,
     AgentLogsExecutionEvent,
@@ -9,13 +9,15 @@ from crewai.events.types.logging_events import (
 from forward_listener import ForwardingListener
 from crewai.events.event_bus import CrewAIEventsBus
 
+from crewai.agent.core import LiteAgent
+
 class LoggingListener(ForwardingListener):
     def __init__(self, loop: asyncio.AbstractEventLoop, queue: asyncio.Queue):
         super().__init__(loop, queue)
 
     def setup_listeners(self, crewai_event_bus: CrewAIEventsBus) -> None:
         @crewai_event_bus.on(AgentLogsStartedEvent)
-        def on_agent_logs_started(source: Any, event: AgentLogsStartedEvent):
+        def on_agent_logs_started(source: Agent, event: AgentLogsStartedEvent):
             payload = {
                 "type": event.type,
                 "timestamp": getattr(event, "timestamp", None),
@@ -26,7 +28,7 @@ class LoggingListener(ForwardingListener):
             self._push(payload)
 
         @crewai_event_bus.on(AgentLogsExecutionEvent)
-        def on_agent_logs_exec(source: Any, event: AgentLogsExecutionEvent):
+        def on_agent_logs_exec(source: Agent | LiteAgent, event: AgentLogsExecutionEvent):
             payload = {
                 "type": event.type,
                 "timestamp": getattr(event, "timestamp", None),

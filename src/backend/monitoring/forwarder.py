@@ -7,20 +7,13 @@ from typing import Any
 import asyncio
 import json
 
-try:
-    import redis.asyncio as aioredis
-except Exception:  # pragma: no cover - runtime dependency
-    aioredis = None
-
+import redis.asyncio as aioredis
 
 async def redis_forwarder(queue: asyncio.Queue, redis_url: str, channel: str):
     """Continuously publish messages from the queue to redis channel.
 
     Retries on connection failure with exponential backoff.
     """
-    if aioredis is None:
-        raise RuntimeError("redis (asyncio) package is required: pip install redis")
-
     backoff = 1
     while True:
         try:

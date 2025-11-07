@@ -15,11 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 
-try:
-    import redis.asyncio as aioredis
-except Exception:
-    aioredis = None
-
+import redis.asyncio as aioredis
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -27,9 +23,6 @@ async def lifespan(app: FastAPI):
     redis_task = None
     redis_client = None
     try:
-        if aioredis is None:
-            raise RuntimeError("redis package required: pip install redis")
-
         async def _redis_subscriber(manager: "ConnectionManager", redis_url: str, channel: str):
             """Subscribe to Redis channel and broadcast received messages to connected WebSocket clients."""
             client = aioredis.from_url(redis_url)

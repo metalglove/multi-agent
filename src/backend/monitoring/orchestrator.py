@@ -70,7 +70,7 @@ def run_with_monitoring():
     loop = asyncio.new_event_loop()
     send_queue: asyncio.Queue = asyncio.Queue()
 
-    # Create listener that forwards into the queue
+    # Create listeners that forwards into the queue
     listeners = setup_listeners(loop, send_queue, crewai_event_bus)
 
     # Start forwarder in background thread (publishes to Redis)

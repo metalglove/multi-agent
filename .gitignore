@@ -1,0 +1,6 @@
+crewai_env/
+__pycache__/
+.vscode/
+.DS_Store
+temp/
+outputs/

@@ -9,17 +9,15 @@ import sys
 import asyncio
 import threading
 
-# Ensure src/ is on sys.path so we can import core packages with plain names
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+from ..core.artifacts import ArtifactOutput
+from ..core.agents import AgentManager
+from ..core.tasks import TaskManager
 
-from core.artifacts import ArtifactOutput
-from core.agents import AgentManager
-from core.tasks import TaskManager
 from crewai import LLM, Crew, Process
 from crewai.events import crewai_event_bus
 
-from .forwarder import redis_forwarder, start_loop_in_thread
-from .listener import ForwardingListener
+from forwarder import redis_forwarder, start_loop_in_thread
+from listener import setup_listeners
 
 
 def run_with_monitoring():
@@ -73,8 +71,7 @@ def run_with_monitoring():
     send_queue: asyncio.Queue = asyncio.Queue()
 
     # Create listener that forwards into the queue
-    forwarding_listener = ForwardingListener(loop, send_queue)
-    forwarding_listener.setup_listeners(crewai_event_bus)
+    listeners = setup_listeners(loop, send_queue, crewai_event_bus)
 
     # Start forwarder in background thread (publishes to Redis)
     forwarder_coro = redis_forwarder(send_queue, redis_url, redis_channel)

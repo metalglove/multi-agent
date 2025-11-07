@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "8000:8000"
+    environment:
+      - BACKEND_PORT=8000
+      - OPENAI_API_BASE=http://host.docker.internal:1234/v1
+      - WS_URL=ws://localhost:8000/ws/events
+    volumes:
+      - ./outputs:/app/outputs
+      - ./src/core:/app/src/core
+    depends_on:
+      - frontend
+    networks:
+      - crewai-network
+
+  frontend:
+    build:
+      context: ./src/frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:80"
+    networks:
+      - crewai-network
+
+networks:
+  crewai-network:
+    driver: bridge

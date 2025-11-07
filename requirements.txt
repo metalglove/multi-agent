@@ -1,0 +1,7 @@
+crewai==1.4.0
+crewai[tools]==1.4.0
+python-dotenv
+fastapi
+uvicorn
+websockets
+pydantic

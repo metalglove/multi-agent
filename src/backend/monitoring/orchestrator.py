@@ -41,30 +41,60 @@ def run_with_monitoring():
     agents = agent_manager.get_all_agents()
     tasks = task_manager.get_all_tasks()
 
-    # LLM configuration (can be overridden via env)
-    # For models with limited context windows (e.g., 32k tokens), set max_tokens appropriately
-    max_tokens = int(os.getenv("LLM_MAX_TOKENS", "8000"))  # Reserve space for output
-    context_window = int(os.getenv("LLM_CONTEXT_WINDOW", "32000"))
-    
+    # LLM and embedder configuration (can be overridden via env). The defaults
+    # are tuned for a local LM Studio instance running an OpenAI-compatible
+    # endpoint (e.g. http://localhost:1234/v1). We keep model identifiers
+    # separate so the same base_url can be used for both the LLM and the
+    # embedder.
+    max_tokens = int(os.getenv("LLM_MAX_TOKENS", "8192"))  # per-response cap
+    context_window = int(os.getenv("LLM_CONTEXT_WINDOW", "128000"))  # large extended context
+
+    # LM Studio / local LLM defaults
+    llm_model = os.getenv("LLM_MODEL", "openai/openai/gpt-oss-20b")
+    api_base = os.getenv("LLM_API_BASE", "http://localhost:1234/v1")
+    api_key = os.getenv("LLM_API_KEY", "sk-12345")
+    temperature = float(os.getenv("LLM_TEMPERATURE", "0.7"))
+    top_p = float(os.getenv("LLM_TOP_P", "0.95"))
+
+    # Embedder defaults (same base_url, different model id)
+    embedder_model = os.getenv("EMBEDDER_MODEL", "text-embedding-nomic-embed-text-v1.5")
+    embedder_dims = int(os.getenv("EMBEDDER_DIMS", "768"))
+
     # Log LLM configuration for debugging
     print(f"\n🧠 LLM Configuration:")
-    print(f"   Model: {os.getenv('OPENAI_MODEL_NAME', 'openai/qwen/qwen3-4b-2507')}")
+    print(f"   Model: {llm_model}")
+    print(f"   Base URL: {api_base}")
     print(f"   Context Window: {context_window} tokens")
     print(f"   Max Output Tokens: {max_tokens} tokens")
     print(f"   Available for Input: {context_window - max_tokens} tokens\n")
-    
+
     llm_config = {
-        "model": os.getenv("OPENAI_MODEL_NAME", "openai/qwen/qwen3-4b-2507"),
-        "base_url": os.getenv("OPENAI_API_BASE", "http://localhost:1234/v1"),
-        "api_key": os.getenv("OPENAI_API_KEY", "not-needed"),
-        "temperature": float(os.getenv("LLM_TEMPERATURE", "0.7")),
+        "model": llm_model,
+        "base_url": api_base,
+        "api_key": api_key,
+        "temperature": temperature,
+        "top_p": top_p,
+        "max_tokens": max_tokens,
     }
-    
-    # Add max_tokens if specified to prevent context overflow
-    if max_tokens:
-        llm_config["max_tokens"] = max_tokens
-    
+
+    # Initialize the LLM instance used by the crew manager/chat
     local_llm = LLM(**llm_config)
+
+    # Embedder configuration using the same OpenAI-compatible API surface
+    embedder = {
+        "provider": "openai",
+        "config": {
+            "api_key": api_key,
+            "api_base": api_base,
+            "model": embedder_model,
+            "dimensions": embedder_dims,
+        },
+    }
+
+    # Crew-level flags (can be tuned through environment variables)
+    crew_verbose = os.getenv("CREW_VERBOSE", "true")
+    crew_memory = os.getenv("CREW_MEMORY", "true").lower() in ("1", "true", "yes")
+    crew_cache = os.getenv("CREW_CACHE", "true").lower() in ("1", "true", "yes")
 
     crew: Crew = Crew(
         agents=agents,
@@ -72,16 +102,10 @@ def run_with_monitoring():
         process=Process.hierarchical,
         manager_llm=local_llm,
         chat_llm=local_llm,
-        verbose=True,
-        memory=True,
-        embedder={
-            "provider": "openai",
-            "config": {
-                "api_key": "not-needed",
-                "api_base": "http://localhost:1234/v1",
-                "model": "text-embedding-nomic-embed-text-v1.5",
-            },
-        },
+        verbose=crew_verbose,
+        memory=crew_memory,
+        embedder=embedder,
+        cache=crew_cache,
     )
 
     project_details = """

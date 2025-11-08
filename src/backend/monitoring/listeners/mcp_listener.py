@@ -10,7 +10,7 @@ from crewai.events.types.mcp_events import (
     MCPToolExecutionCompletedEvent,
 )
 
-from forward_listener import ForwardingListener
+from .forward_listener import ForwardingListener
 from crewai.events.event_bus import CrewAIEventsBus
 
 class MCPListener(ForwardingListener):
@@ -28,6 +28,8 @@ class MCPListener(ForwardingListener):
                 "transport_type": getattr(event, "transport_type", None),
                 "connect_timeout": getattr(event, "connect_timeout", None),
                 "is_reconnect": getattr(event, "is_reconnect", None),
+                "agent_id": getattr(event, "agent_id", None),
+                "agent_role": getattr(event, "agent_role", None),
             }
             self._push(payload)
 
@@ -40,6 +42,10 @@ class MCPListener(ForwardingListener):
                 "server_url": getattr(event, "server_url", None),
                 "connection_duration_ms": getattr(event, "connection_duration_ms", None),
                 "is_reconnect": getattr(event, "is_reconnect", None),
+                "started_at": getattr(event, "started_at", None),
+                "completed_at": getattr(event, "completed_at", None),
+                "agent_id": getattr(event, "agent_id", None),
+                "agent_role": getattr(event, "agent_role", None),
             }
             self._push(payload)
 

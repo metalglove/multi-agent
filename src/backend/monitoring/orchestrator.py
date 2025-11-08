@@ -16,33 +16,62 @@ from ..core.tasks import TaskManager
 from crewai import LLM, Crew, Process
 from crewai.events import crewai_event_bus
 
-from forwarder import redis_forwarder, start_loop_in_thread
-from listener import setup_listeners
+from .forwarder import redis_forwarder, start_loop_in_thread
+from .listener import setup_listeners
 
 
 def run_with_monitoring():
     OUTPUT_FOLDER = os.getenv('CREW_OUTPUT_FOLDER', 'outputs')
+    
+    # Convert to absolute path to ensure FileWriterTool can save files
+    OUTPUT_FOLDER = os.path.abspath(OUTPUT_FOLDER)
 
     # Build agents and tasks
     artifact_output = ArtifactOutput(OUTPUT_FOLDER)
+    
+    # Ensure output directory exists
+    output_path = artifact_output.get_base_output_path()
+    os.makedirs(output_path, exist_ok=True)
+    print(f"\nCrewAI Output Directory: {output_path}")
+    print(f"Directory created: {os.path.exists(output_path)}")
+    print(f"Is writable: {os.access(output_path, os.W_OK)}\n")
+    
     agent_manager = AgentManager(artifact_output)
     task_manager = TaskManager(agent_manager)
     agents = agent_manager.get_all_agents()
     tasks = task_manager.get_all_tasks()
 
     # LLM configuration (can be overridden via env)
-    local_llm = LLM(
-        model=os.getenv("OPENAI_MODEL_NAME", "openai/qwen/qwen3-4b-2507"),
-        base_url=os.getenv("OPENAI_API_BASE", "http://localhost:1234/v1"),
-        api_key=os.getenv("OPENAI_API_KEY", "not-needed"),
-        temperature=0.7,
-    )
+    # For models with limited context windows (e.g., 32k tokens), set max_tokens appropriately
+    max_tokens = int(os.getenv("LLM_MAX_TOKENS", "8000"))  # Reserve space for output
+    context_window = int(os.getenv("LLM_CONTEXT_WINDOW", "32000"))
+    
+    # Log LLM configuration for debugging
+    print(f"\n🧠 LLM Configuration:")
+    print(f"   Model: {os.getenv('OPENAI_MODEL_NAME', 'openai/qwen/qwen3-4b-2507')}")
+    print(f"   Context Window: {context_window} tokens")
+    print(f"   Max Output Tokens: {max_tokens} tokens")
+    print(f"   Available for Input: {context_window - max_tokens} tokens\n")
+    
+    llm_config = {
+        "model": os.getenv("OPENAI_MODEL_NAME", "openai/qwen/qwen3-4b-2507"),
+        "base_url": os.getenv("OPENAI_API_BASE", "http://localhost:1234/v1"),
+        "api_key": os.getenv("OPENAI_API_KEY", "not-needed"),
+        "temperature": float(os.getenv("LLM_TEMPERATURE", "0.7")),
+    }
+    
+    # Add max_tokens if specified to prevent context overflow
+    if max_tokens:
+        llm_config["max_tokens"] = max_tokens
+    
+    local_llm = LLM(**llm_config)
 
     crew: Crew = Crew(
         agents=agents,
         tasks=tasks,
         process=Process.hierarchical,
         manager_llm=local_llm,
+        chat_llm=local_llm,
         verbose=True,
         memory=True,
         embedder={
@@ -58,6 +87,8 @@ def run_with_monitoring():
     project_details = """
     A platform to write notes and create a knowledge graph with manual linking 
     and graph visualization through tags, using a Vue frontend and TypeScript backend.
+    Make sure to write the code and documentation in a modular way, with clear separation 
+    using the file writer tool at each step of the process.
     """
 
     print("\n🚀 Starting CrewAI with Event Monitoring...")

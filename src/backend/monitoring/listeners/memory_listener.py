@@ -14,7 +14,7 @@ from crewai.events.types.memory_events import (
 )
 # from crewai.memory import EntityMemory, ExternalMemory, LongTermMemory, ShortTermMemory
 from crewai.memory.memory import Memory
-from forward_listener import ForwardingListener
+from .forward_listener import ForwardingListener
 from crewai.events.event_bus import CrewAIEventsBus
 
 class MemoryListener(ForwardingListener):

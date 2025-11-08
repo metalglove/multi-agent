@@ -12,7 +12,7 @@ from crewai.events.types.flow_events import (
     MethodExecutionStartedEvent,
 )
 
-from forward_listener import ForwardingListener
+from .forward_listener import ForwardingListener
 from crewai.events.event_bus import CrewAIEventsBus
 
 class FlowListener(ForwardingListener):

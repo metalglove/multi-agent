@@ -7,7 +7,7 @@ from crewai.events.types.task_events import (
     TaskFailedEvent,
 )
 
-from forward_listener import ForwardingListener
+from .forward_listener import ForwardingListener
 from crewai.events.event_bus import CrewAIEventsBus
 
 class TaskListener(ForwardingListener):
@@ -30,7 +30,7 @@ class TaskListener(ForwardingListener):
 
         @crewai_event_bus.on(TaskCompletedEvent)
         def on_task_completed(source: Task, event: TaskCompletedEvent):
-            to: TaskOutput = event.task_output
+            to: TaskOutput = event.output
             payload = {
                 "type": event.type,
                 "start_time": source.start_time,

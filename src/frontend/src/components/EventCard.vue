@@ -22,15 +22,15 @@
       </div>
       <div v-if="event.data?.reasoning_plan" class="event-detail">
         <span class="label">Reasoning:</span>
-        <p class="value-long">{{ event.data.reasoning_plan }}</p>
+        <MarkdownRenderer :content="event.data.reasoning_plan" />
       </div>
       <div v-if="event.data?.task_description" class="event-detail">
         <span class="label">Description:</span>
-        <p class="value-long">{{ event.data.task_description }}</p>
+        <MarkdownRenderer :content="event.data.task_description" />
       </div>
       <div v-if="event.data?.task_output" class="event-detail">
         <span class="label">Output:</span>
-        <p class="value-long">{{ event.data.task_output }}</p>
+        <MarkdownRenderer :content="event.data.task_output" />
       </div>
       <div v-if="event.data?.error" class="event-detail">
         <span class="label">Error:</span>
@@ -43,6 +43,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { CrewAIEvent } from '../types/events'
+import MarkdownRenderer from './MarkdownRenderer.vue'
 
 interface Props {
   event: CrewAIEvent
@@ -83,7 +84,7 @@ const eventLabel = computed(() => {
   return labels[type] || type
 })
 
-function formatTime(timestamp?: string): string {
+function formatTime(timestamp?: string | number | null): string {
   if (!timestamp) return 'Just now'
   try {
     const date = new Date(timestamp)

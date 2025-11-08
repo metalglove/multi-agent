@@ -10,7 +10,7 @@ from crewai.events.types.llm_events import (
     LLMStreamChunkEvent,
 )
 
-from forward_listener import ForwardingListener
+from .forward_listener import ForwardingListener
 from crewai.events.event_bus import CrewAIEventsBus
 
 class LLMListener(ForwardingListener):
@@ -29,6 +29,8 @@ class LLMListener(ForwardingListener):
                 "from_task": getattr(event, "from_task", None),
                 "from_agent": getattr(event, "from_agent", None),
                 "temperature": getattr(source, "temperature", None),
+                "callbacks": getattr(event, "callbacks", None),
+                "available_functions": getattr(event, "available_functions", None),
             }
             self._push(payload)
 

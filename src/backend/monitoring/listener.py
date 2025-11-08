@@ -1,6 +1,6 @@
 import asyncio
 
-from listeners import (
+from .listeners import (
     A2AListener,
     CrewListener,
     FlowListener,
@@ -32,7 +32,7 @@ def setup_listeners(loop: asyncio.AbstractEventLoop,
         KnowledgeListener(loop, queue),
         MemoryListener(loop, queue),
         MCPListener(loop, queue),
-        LoggingListener(loop, queue),
+        # LoggingListener(loop, queue),
         GuardrailListener(loop, queue),
     ]
     for listener in listeners:

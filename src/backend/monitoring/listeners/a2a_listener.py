@@ -11,7 +11,7 @@ from crewai.events.types.a2a_events import (
     A2AResponseReceivedEvent,
 )
 
-from forward_listener import ForwardingListener
+from .forward_listener import ForwardingListener
 from crewai.events.event_bus import CrewAIEventsBus
 
 class A2AListener(ForwardingListener):
@@ -64,6 +64,7 @@ class A2AListener(ForwardingListener):
                 "task_name": event.task_name,
 
                 "endpoint": getattr(event, "endpoint", None),
+                "a2a_agent_name": getattr(event, "a2a_agent_name", None),
             }
             self._push(payload)
 

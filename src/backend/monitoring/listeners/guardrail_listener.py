@@ -7,7 +7,7 @@ from crewai.events.types.llm_guardrail_events import (
     LLMGuardrailFailedEvent,
 )
 
-from forward_listener import ForwardingListener
+from .forward_listener import ForwardingListener
 from crewai.events.event_bus import CrewAIEventsBus
 
 class GuardrailListener(ForwardingListener):

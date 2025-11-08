@@ -6,7 +6,7 @@ from crewai.events.types.logging_events import (
     AgentLogsExecutionEvent,
 )
 
-from forward_listener import ForwardingListener
+from .forward_listener import ForwardingListener
 from crewai.events.event_bus import CrewAIEventsBus
 
 from crewai.agent.core import LiteAgent

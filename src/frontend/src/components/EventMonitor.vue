@@ -1,35 +1,56 @@
 <template>
   <div class="event-monitor">
-    <div class="controls">
-      <div class="tabs">
-        <button 
-          v-for="tab in tabs" 
-          :key="tab.id"
-          class="tab"
-          :class="{ active: activeTab === tab.id }"
-          @click="activeTab = tab.id"
-        >
-          <span class="tab-label">{{ tab.label }}</span>
-          <span class="tab-count">{{ tab.count }}</span>
-        </button>
-      </div>
-      <button class="btn-clear" @click="store.clearEvents">
-        🗑️ Clear
+    <!-- Main Tabs -->
+    <div class="main-tabs">
+      <button 
+        v-for="tab in mainTabs" 
+        :key="tab.id"
+        class="main-tab"
+        :class="{ active: activeMainTab === tab.id }"
+        @click="activeMainTab = tab.id"
+      >
+        <span class="tab-icon">{{ tab.icon }}</span>
+        <span class="tab-label">{{ tab.label }}</span>
       </button>
     </div>
 
-    <div class="events-container">
-      <div v-if="displayedEvents.length === 0" class="empty-state">
-        <p>Waiting for events...</p>
+    <!-- Events View -->
+    <div v-if="activeMainTab === 'events'" class="view-container">
+      <div class="controls">
+        <div class="filter-tabs">
+          <button 
+            v-for="tab in eventGroupTabs" 
+            :key="tab.id"
+            class="filter-tab"
+            :class="{ active: activeEventGroup === tab.id }"
+            @click="activeEventGroup = tab.id"
+          >
+            <span class="tab-icon">{{ tab.icon }}</span>
+            <span class="tab-label">{{ tab.label }}</span>
+            <span class="tab-count">{{ tab.count }}</span>
+          </button>
+        </div>
+        <button class="btn-clear" @click="store.clearEvents">
+          🗑️ Clear
+        </button>
       </div>
-      <div v-else class="events-list">
-        <EventCard 
-          v-for="event in displayedEvents" 
-          :key="event.id"
-          :event="event"
-        />
+
+      <div class="events-container">
+        <div v-if="filteredEvents.length === 0" class="empty-state">
+          <p>{{ emptyMessage }}</p>
+        </div>
+        <div v-else class="events-list">
+          <EventCard 
+            v-for="event in filteredEvents" 
+            :key="event.id"
+            :event="event"
+          />
+        </div>
       </div>
     </div>
+
+    <!-- Agent Chat View -->
+    <AgentChat v-else-if="activeMainTab === 'chat'" />
   </div>
 </template>
 
@@ -37,36 +58,167 @@
 import { ref, computed } from 'vue'
 import { useEventStore } from '../stores/eventStore'
 import EventCard from './EventCard.vue'
+import AgentChat from './AgentChat.vue'
+import type { CrewAIEvent } from '../types/events'
 
 const store = useEventStore()
-const activeTab = ref<'all' | 'agents' | 'tasks' | 'errors'>('all')
+const activeMainTab = ref<'events' | 'chat'>('events')
+const activeEventGroup = ref<string>('all')
 
-type TabId = 'all' | 'agents' | 'tasks' | 'errors'
-type Tab = { id: TabId; label: string; count: number }
+const mainTabs = [
+  { id: 'events' as const, label: 'Events', icon: '📊' },
+  { id: 'chat' as const, label: 'Agent Chat', icon: '💬' },
+]
 
-const tabs = computed<Tab[]>(() => [
-  { id: 'all', label: 'All Events', count: store.events.length },
-  { id: 'agents', label: 'Agent Activity', count: store.agentEvents.length },
-  { id: 'tasks', label: 'Tasks', count: store.taskEvents.length },
-  { id: 'errors', label: 'Errors', count: store.errorEvents.length },
-])
+type EventGroup = {
+  id: string
+  label: string
+  icon: string
+  filter: (event: CrewAIEvent) => boolean
+}
 
-const displayedEvents = computed(() => {
-  switch (activeTab.value) {
-    case 'agents':
-      return store.agentEvents
-    case 'tasks':
-      return store.taskEvents
-    case 'errors':
-      return store.errorEvents
-    default:
-      return store.events
-  }
+const eventGroups: EventGroup[] = [
+  {
+    id: 'all',
+    label: 'All Events',
+    icon: '📊',
+    filter: () => true,
+  },
+  {
+    id: 'crew',
+    label: 'Crew',
+    icon: '👥',
+    filter: (e) => e.type.includes('crew'),
+  },
+  {
+    id: 'task',
+    label: 'Tasks',
+    icon: '✅',
+    filter: (e) => e.type.includes('task'),
+  },
+  {
+    id: 'reasoning',
+    label: 'Reasoning',
+    icon: '🧠',
+    filter: (e) => e.type.includes('reasoning'),
+  },
+  {
+    id: 'memory',
+    label: 'Memory',
+    icon: '💾',
+    filter: (e) => e.type.includes('memory'),
+  },
+  {
+    id: 'llm',
+    label: 'LLM',
+    icon: '🤖',
+    filter: (e) => e.type.includes('llm'),
+  },
+  {
+    id: 'tool',
+    label: 'Tools',
+    icon: '🔧',
+    filter: (e) => e.type.includes('tool'),
+  },
+  {
+    id: 'knowledge',
+    label: 'Knowledge',
+    icon: '📚',
+    filter: (e) => e.type.includes('knowledge'),
+  },
+  {
+    id: 'flow',
+    label: 'Flow',
+    icon: '🔀',
+    filter: (e) => e.type.includes('flow'),
+  },
+  {
+    id: 'mcp',
+    label: 'MCP',
+    icon: '🔌',
+    filter: (e) => e.type.includes('mcp'),
+  },
+  {
+    id: 'a2a',
+    label: 'Agent-to-Agent',
+    icon: '🔗',
+    filter: (e) => e.type.includes('a2a'),
+  },
+  {
+    id: 'errors',
+    label: 'Errors',
+    icon: '❌',
+    filter: (e) => e.type.includes('failed') || e.type.includes('error'),
+  },
+]
+
+const eventGroupTabs = computed(() => {
+  return eventGroups.map(group => ({
+    ...group,
+    count: store.events.filter(group.filter).length,
+  }))
+})
+
+const filteredEvents = computed(() => {
+  const selectedGroup = eventGroups.find(g => g.id === activeEventGroup.value)
+  if (!selectedGroup) return []
+  return store.events.filter(selectedGroup.filter)
+})
+
+const emptyMessage = computed(() => {
+  if (store.events.length === 0) return 'Waiting for events...'
+  return `No ${activeEventGroup.value} events yet`
 })
 </script>
 
 <style scoped>
 .event-monitor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 1rem;
+}
+
+.main-tabs {
+  display: flex;
+  gap: 0.5rem;
+  background: white;
+  padding: 0.75rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.main-tab {
+  padding: 0.75rem 1.5rem;
+  border: 2px solid #e0e0e0;
+  background: white;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.main-tab:hover {
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.main-tab.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.tab-icon {
+  font-size: 1.2rem;
+}
+
+.view-container {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -81,15 +233,18 @@ const displayedEvents = computed(() => {
   padding: 1rem;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
-.tabs {
+.filter-tabs {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+  flex: 1;
 }
 
-.tab {
+.filter-tab {
   padding: 0.5rem 1rem;
   border: 2px solid #e0e0e0;
   background: white;
@@ -100,17 +255,20 @@ const displayedEvents = computed(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-size: 0.85rem;
 }
 
-.tab:hover {
+.filter-tab:hover {
   border-color: #667eea;
   color: #667eea;
+  transform: translateY(-2px);
 }
 
-.tab.active {
+.filter-tab.active {
   background: #667eea;
   color: white;
   border-color: #667eea;
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
 }
 
 .tab-count {
@@ -118,11 +276,16 @@ const displayedEvents = computed(() => {
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
+  border-radius: 10px;
   min-width: 24px;
-  height: 24px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  height: 20px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0 0.3rem;
+}
+
+.filter-tab.active .tab-count {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .btn-clear {
@@ -134,11 +297,13 @@ const displayedEvents = computed(() => {
   cursor: pointer;
   font-weight: 500;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .btn-clear:hover {
   background: #d32f2f;
   transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(244, 67, 54, 0.3);
 }
 
 .events-container {

@@ -7,7 +7,7 @@ from crewai.events.types.reasoning_events import (
     AgentReasoningFailedEvent,
 )
 
-from forward_listener import ForwardingListener
+from .forward_listener import ForwardingListener
 from crewai.events.event_bus import CrewAIEventsBus
 
 class ReasoningListener(ForwardingListener):

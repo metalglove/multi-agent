@@ -27,6 +27,47 @@ export interface CrewKickoffFailedEvent extends CrewAIEvent {
   error?: any
 }
 
+export interface CrewTrainStartedEvent extends CrewAIEvent {
+  crew_name?: string
+  n_iterations?: number
+  filename?: string
+  inputs?: Record<string, any> | any[]
+}
+
+export interface CrewTrainCompletedEvent extends CrewAIEvent {
+  crew_name?: string
+  n_iterations?: number
+  filename?: string
+}
+
+export interface CrewTrainFailedEvent extends CrewAIEvent {
+  crew_name?: string
+  error?: any
+}
+
+export interface CrewTestStartedEvent extends CrewAIEvent {
+  crew_name?: string
+  n_iterations?: number
+  eval_llm?: any
+  inputs?: Record<string, any> | any[]
+}
+
+export interface CrewTestCompletedEvent extends CrewAIEvent {
+  crew_name?: string
+}
+
+export interface CrewTestFailedEvent extends CrewAIEvent {
+  crew_name?: string
+  error?: any
+}
+
+export interface CrewTestResultEvent extends CrewAIEvent {
+  crew_name?: string
+  quality?: number
+  execution_duration?: number
+  model?: string
+}
+
 // --- Task events
 export interface TaskStartedEvent extends CrewAIEvent {
   start_time?: string | number | null
@@ -177,6 +218,8 @@ export interface LLMCallStartedEvent extends CrewAIEvent {
   from_task?: string | null
   from_agent?: string | null
   temperature?: number | null
+  callbacks?: any[]
+  available_functions?: Record<string, any>
 }
 
 export interface LLMCallCompletedEvent extends CrewAIEvent {
@@ -342,6 +385,8 @@ export interface MCPConnectionStartedEvent extends CrewAIEvent {
   transport_type?: string
   connect_timeout?: number | null
   is_reconnect?: boolean | null
+  agent_id?: string | null
+  agent_role?: string | null
 }
 
 export interface MCPConnectionCompletedEvent extends CrewAIEvent {
@@ -349,6 +394,10 @@ export interface MCPConnectionCompletedEvent extends CrewAIEvent {
   server_url?: string
   connection_duration_ms?: number | null
   is_reconnect?: boolean | null
+  started_at?: string | number | null
+  completed_at?: string | number | null
+  agent_id?: string | null
+  agent_role?: string | null
 }
 
 export interface MCPConnectionFailedEvent extends CrewAIEvent {
@@ -462,6 +511,7 @@ export interface A2AConversationStartedEvent extends CrewAIEvent {
   task_id?: string
   task_name?: string
   endpoint?: string | null
+  a2a_agent_name?: string | null
 }
 
 export interface A2AConversationCompletedEvent extends CrewAIEvent {
@@ -505,6 +555,13 @@ export type EventType =
   | CrewKickoffStartedEvent
   | CrewKickoffCompletedEvent
   | CrewKickoffFailedEvent
+  | CrewTrainStartedEvent
+  | CrewTrainCompletedEvent
+  | CrewTrainFailedEvent
+  | CrewTestStartedEvent
+  | CrewTestCompletedEvent
+  | CrewTestFailedEvent
+  | CrewTestResultEvent
   | TaskStartedEvent
   | TaskCompletedEvent
   | TaskFailedEvent

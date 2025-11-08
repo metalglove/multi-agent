@@ -11,7 +11,7 @@ from crewai.events.types.tool_usage_events import (
     ToolExecutionErrorEvent,
 )
 
-from forward_listener import ForwardingListener
+from .forward_listener import ForwardingListener
 from crewai.events.event_bus import CrewAIEventsBus
 
 class ToolUsageListener(ForwardingListener):

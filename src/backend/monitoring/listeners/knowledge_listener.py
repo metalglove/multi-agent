@@ -11,7 +11,7 @@ from crewai.events.types.knowledge_events import (
     KnowledgeQueryStartedEvent,
 )
 
-from forward_listener import ForwardingListener
+from .forward_listener import ForwardingListener
 from crewai.events.event_bus import CrewAIEventsBus
 
 

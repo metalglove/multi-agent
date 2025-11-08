@@ -6,8 +6,20 @@ will be JSON-serialized. Sending `None` signals shutdown.
 from typing import Any
 import asyncio
 import json
+from datetime import datetime
 
 import redis.asyncio as aioredis
+
+
+class DateTimeEncoder(json.JSONEncoder):
+    """Custom JSON encoder that handles datetime objects and other non-serializable types."""
+    def default(self, obj: Any) -> Any:
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        # For any other non-serializable object, convert to string
+        # This includes TokenCalcHandler, custom objects, etc.
+        return str(obj)
+
 
 async def redis_forwarder(queue: asyncio.Queue, redis_url: str, channel: str):
     """Continuously publish messages from the queue to redis channel.
@@ -29,7 +41,7 @@ async def redis_forwarder(queue: asyncio.Queue, redis_url: str, channel: str):
                     await client.close()
                     return
                 try:
-                    await client.publish(channel, json.dumps(msg))
+                    await client.publish(channel, json.dumps(msg, cls=DateTimeEncoder))
                 except Exception as e:
                     print(f"[forwarder] Error publishing to Redis, will reconnect: {e}")
                     # Re-enqueue and break to reconnect
